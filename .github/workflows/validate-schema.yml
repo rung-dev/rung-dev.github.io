@@ -1,0 +1,43 @@
+name: validate-schema
+
+# Guards the published JSON Schemas served from /schema/. Runs on any change to
+# schema/ so a hand-edit cannot silently break the files the $id URLs resolve to.
+on:
+  push:
+    paths: ["schema/**"]
+  pull_request:
+    paths: ["schema/**"]
+  workflow_dispatch:
+
+jobs:
+  validate:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Each schema is valid JSON and its $id matches where it is served
+        run: |
+          python3 - <<'PY'
+          import glob, json, sys
+          BASE = "https://rung-dev.github.io/"
+          bad = []
+          files = sorted(glob.glob("schema/*.schema.json"))
+          if not files:
+              bad.append("no schema/*.schema.json files found")
+          for path in files:
+              try:
+                  doc = json.load(open(path))
+              except Exception as e:
+                  bad.append(f"{path}: not valid JSON: {e}")
+                  continue
+              want = BASE + path  # e.g. https://rung-dev.github.io/schema/evidence-bundle-v2.schema.json
+              got = doc.get("$id")
+              if got != want:
+                  bad.append(f"{path}: $id is {got!r}, expected {want!r} (must match its served path)")
+              else:
+                  print(f"ok: {path} -> {got}")
+          if bad:
+              print("\nFAIL:")
+              print("\n".join(f"  - {m}" for m in bad))
+              sys.exit(1)
+          print("\nall published schemas valid and self-consistent")
+          PY

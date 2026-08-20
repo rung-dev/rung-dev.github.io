@@ -1,0 +1,559 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>rung: did your agent run it, or only read it?</title>
+<meta name="description" content="Your AI agent says it verified the change. rung checks whether it ran the real thing or only read the code, then ships it or blocks it. One command, free and offline.">
+<link rel="icon" href="favicon.svg" type="image/svg+xml">
+<meta property="og:title" content="rung">
+<meta property="og:description" content="At which rung did your agent verify? A one-command gate that tells whether an agent ran the real thing or only read the code.">
+<meta property="og:type" content="website">
+<meta property="og:url" content="https://rung-dev.github.io/">
+<meta property="og:image" content="https://rung-dev.github.io/og.png">
+<meta property="og:image:width" content="1200">
+<meta property="og:image:height" content="630">
+<meta property="og:image:type" content="image/png">
+<meta property="og:image:alt" content="rung: at which rung did your agent verify? A ladder from read the code to ran the real thing, with a gate at the top.">
+<meta name="twitter:card" content="summary_large_image">
+<meta name="twitter:title" content="rung">
+<meta name="twitter:description" content="At which rung did your agent verify? A one-command gate that tells whether an agent ran the real thing or only read the code.">
+<meta name="twitter:image" content="https://rung-dev.github.io/og.png">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Bricolage+Grotesque:opsz,wght@12..96,600;12..96,700;12..96,800&family=Hanken+Grotesk:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
+<style>
+  :root {
+    --bg: #f6f8f6;
+    --surface: #edf1ed;
+    --card: #ffffff;
+    --ink: #0b1310;
+    --ink-2: #10201a;
+    --text: #121a16;
+    --muted: #566159;
+    --faint: #869089;
+    --line: color-mix(in srgb, #0b1310 11%, transparent);
+    --line-soft: color-mix(in srgb, #0b1310 7%, transparent);
+    --brand: #06a95f;
+    --brand-deep: #057d47;
+    --brand-glow: #21d67f;
+    --brand-tint: #d8f3e4;
+    --aim-strong: var(--ink);
+    --block: #e0523c;
+    --on-dark: #e9f1ea;
+    --on-dark-muted: #8ea89a;
+    --on-dark-line: color-mix(in srgb, #e9f1ea 16%, transparent);
+    --r: 16px;
+    --r-sm: 10px;
+    --r-pill: 999px;
+    --maxw: 1120px;
+    --ease: cubic-bezier(.2,.75,.25,1);
+    --font-disp: "Bricolage Grotesque", system-ui, sans-serif;
+    --font-body: "Hanken Grotesk", system-ui, sans-serif;
+    --font-mono: "JetBrains Mono", ui-monospace, Menlo, monospace;
+  }
+  @media (prefers-color-scheme: dark) {
+    :root {
+      --bg: #0a110d;
+      --surface: #0f1813;
+      --card: #101a15;
+      --text: #e7efe9;
+      --muted: #97a89d;
+      --faint: #6d7d72;
+      --line: color-mix(in srgb, #e7efe9 13%, transparent);
+      --line-soft: color-mix(in srgb, #e7efe9 8%, transparent);
+      --ink: #060c09;
+      --ink-2: #0b1712;
+      --brand-tint: #10281c;
+      --aim-strong: var(--brand-glow);
+    }
+    .ladder .lad-lit { fill: var(--brand-glow); }
+  }
+
+  * { box-sizing: border-box; }
+  html { scroll-behavior: smooth; -webkit-text-size-adjust: 100%; }
+  @media (prefers-reduced-motion: reduce) { html { scroll-behavior: auto; } }
+  body {
+    margin: 0;
+    background: var(--bg);
+    color: var(--text);
+    font-family: var(--font-body);
+    font-size: 17px;
+    line-height: 1.6;
+    -webkit-font-smoothing: antialiased;
+    text-rendering: optimizeLegibility;
+  }
+  .wrap { width: 100%; max-width: var(--maxw); margin-inline: auto; padding-inline: 26px; }
+  a { color: inherit; }
+  h1, h2, h3 { font-family: var(--font-disp); font-weight: 700; letter-spacing: -.02em; line-height: 1.04; margin: 0; }
+  p { margin: 0; }
+  code, .mono { font-family: var(--font-mono); font-variant-ligatures: none; }
+  ::selection { background: var(--brand-deep); color: #fff; }
+  :focus-visible { outline: 2px solid var(--brand-deep); outline-offset: 3px; border-radius: 3px; }
+  .dark :focus-visible { outline-color: var(--brand-glow); }
+
+  /* ---- nav ---- */
+  header.nav {
+    position: sticky; top: 0; z-index: 40;
+    background: color-mix(in srgb, var(--bg) 86%, transparent);
+    backdrop-filter: saturate(1.4) blur(10px);
+    border-bottom: 1px solid var(--line-soft);
+  }
+  .nav .wrap { display: flex; align-items: center; gap: 22px; height: 66px; }
+  .brand { display: inline-flex; align-items: center; gap: 11px; text-decoration: none; font-family: var(--font-disp); font-weight: 800; font-size: 21px; letter-spacing: -.03em; }
+  .brand .mark { width: 30px; height: 30px; border-radius: 8px; display: block; }
+  .nav nav { display: flex; gap: 24px; margin-left: auto; }
+  .nav nav a { text-decoration: none; color: var(--muted); font-weight: 500; font-size: 15px; transition: color .16s var(--ease); }
+  .nav nav a:hover { color: var(--text); }
+  .nav .cta { margin-left: 8px; }
+  @media (max-width: 720px) { .nav nav { display: none; } }
+
+  .btn {
+    display: inline-flex; align-items: center; gap: 9px;
+    font-family: var(--font-body); font-weight: 600; font-size: 15px;
+    text-decoration: none; cursor: pointer;
+    padding: 11px 18px; border-radius: var(--r-pill);
+    border: 1px solid transparent; transition: transform .14s var(--ease), background .16s var(--ease), border-color .16s var(--ease);
+  }
+  .btn:active { transform: translateY(1px); }
+  .btn-primary { background: var(--brand-deep); color: #fff; box-shadow: 0 1px 0 color-mix(in srgb, #000 25%, transparent); }
+  .btn-primary:hover { background: color-mix(in srgb, var(--brand-deep) 86%, #000); }
+  .btn-ghost { border-color: var(--line); color: var(--text); background: transparent; }
+  .btn-ghost:hover { border-color: var(--text); }
+  .btn-on-dark { border-color: var(--on-dark-line); color: var(--on-dark); }
+  .btn-on-dark:hover { border-color: var(--on-dark); }
+
+  section { padding-block: clamp(64px, 9vw, 116px); }
+  .kicker {
+    font-family: var(--font-mono); font-size: 12.5px; font-weight: 500;
+    letter-spacing: .18em; text-transform: uppercase; color: var(--brand-deep);
+  }
+  .dark .kicker { color: var(--brand-glow); }
+  .lede { color: var(--muted); font-size: clamp(18px, 2.1vw, 21px); line-height: 1.55; }
+  .dark .lede { color: var(--on-dark-muted); }
+
+  /* ---- hero ---- */
+  .hero { padding-top: clamp(40px, 6vw, 72px); overflow: clip; }
+  .hero .grid { display: grid; grid-template-columns: 1.15fr .85fr; gap: clamp(28px, 5vw, 68px); align-items: center; }
+  @media (max-width: 900px) { .hero .grid { grid-template-columns: 1fr; } }
+  .hero h1 { font-size: clamp(42px, 7vw, 78px); font-weight: 800; margin-top: 18px; }
+  .hero h1 .accent { color: var(--brand-deep); }
+  .hero .lede { margin-top: 24px; max-width: 33ch; }
+  .hero .actions { margin-top: 30px; display: flex; flex-wrap: wrap; gap: 12px; align-items: center; }
+  .hero-install { margin-top: 22px; display: inline-flex; align-items: center; gap: 12px; background: var(--card); border: 1px solid var(--line); border-radius: var(--r-pill); padding: 8px 8px 8px 18px; font-family: var(--font-mono); }
+  .hero-install .cmd { font-size: 14.5px; color: var(--text); white-space: nowrap; }
+  .hero-install .cmd::before { content: "$ "; color: var(--brand-deep); }
+  .hero-install .copy { border: 0; background: var(--brand-deep); color: #fff; border-radius: var(--r-pill); padding: 6px 14px; font-family: var(--font-body); font-size: 13px; font-weight: 600; cursor: pointer; transition: background .15s var(--ease); }
+  .hero-install .copy:hover { background: color-mix(in srgb, var(--brand-deep) 86%, #000); }
+
+  /* staggered reveal: one, on load */
+  .reveal { opacity: 0; transform: translateY(14px); }
+  @supports (animation-timeline: auto) { }
+  .loaded .reveal { animation: rise .7s var(--ease) forwards; }
+  .loaded .reveal.d1 { animation-delay: .06s; }
+  .loaded .reveal.d2 { animation-delay: .13s; }
+  .loaded .reveal.d3 { animation-delay: .2s; }
+  .loaded .reveal.d4 { animation-delay: .27s; }
+  .loaded .reveal.d5 { animation-delay: .36s; }
+  @keyframes rise { to { opacity: 1; transform: none; } }
+  .no-js .reveal, .reveal.shown { opacity: 1; transform: none; }
+  @media (prefers-reduced-motion: reduce) {
+    .reveal { opacity: 1 !important; transform: none !important; animation: none !important; }
+  }
+
+  /* ---- ladder signature ---- */
+  .ladder-stage { position: relative; display: grid; place-items: center; min-height: 340px; }
+  .ladder-stage .glow {
+    position: absolute; inset: -10% 0 0 0; margin: auto;
+    width: 78%; aspect-ratio: 1; border-radius: 50%;
+    background: radial-gradient(closest-side, color-mix(in srgb, var(--brand-glow) 42%, transparent), transparent 72%);
+    filter: blur(6px); z-index: 0; pointer-events: none;
+  }
+  .ladder { position: relative; z-index: 1; width: min(100%, 400px); height: auto; }
+  .ladder .lad-lit { fill: var(--brand-deep); }
+  .ladder .lad-dim { fill: var(--muted); }
+  .dark .ladder .lad-lit { fill: var(--brand-glow); }
+  .dark .ladder .lad-dim { fill: var(--on-dark-muted); }
+
+  /* ---- problem ---- */
+  .band { background: var(--surface); border-block: 1px solid var(--line-soft); }
+  .measure { max-width: 62ch; }
+  .contrast { margin-top: 34px; display: grid; grid-template-columns: 1fr 1fr; gap: 16px; }
+  @media (max-width: 640px) { .contrast { grid-template-columns: 1fr; } }
+  .cchip {
+    background: var(--card); border: 1px solid var(--line); border-radius: var(--r);
+    padding: 20px 22px;
+  }
+  .cchip .tag { font-family: var(--font-mono); font-size: 12px; letter-spacing: .12em; text-transform: uppercase; color: var(--muted); }
+  .cchip .said { margin-top: 10px; font-family: var(--font-disp); font-weight: 600; font-size: 20px; }
+  .cchip p { margin-top: 8px; color: var(--muted); font-size: 15px; }
+  .cchip.low { border-left: 3px solid var(--faint); }
+  .cchip.high { border-left: 3px solid var(--brand); }
+
+  /* ---- what it does: axes + 2x2 grid ---- */
+  .whatgrid { margin-top: 42px; display: grid; grid-template-columns: 1fr 1.05fr; gap: clamp(28px, 5vw, 58px); align-items: center; }
+  @media (max-width: 900px) { .whatgrid { grid-template-columns: 1fr; gap: 36px; } }
+  .axes { list-style: none; padding: 0; margin: 0; display: grid; gap: 24px; }
+  .axes .lbl { font-family: var(--font-mono); font-size: 12px; letter-spacing: .1em; text-transform: uppercase; color: var(--brand-deep); }
+  .dark .axes .lbl { color: var(--brand-glow); }
+  .axes h3 { margin-top: 6px; font-size: 20px; }
+  .axes p { margin-top: 7px; color: var(--muted); font-size: 15.5px; }
+  .aim-note { margin-top: 28px; padding: 16px 20px; border-left: 3px solid var(--brand); background: var(--brand-tint); border-radius: 0 var(--r-sm) var(--r-sm) 0; font-size: 15.5px; }
+  .aim-note b { color: var(--aim-strong); }
+  .dark .aim-note b { color: var(--brand-glow); }
+
+  .matrix-axis-x { text-align: center; font-family: var(--font-mono); font-size: 12px; letter-spacing: .12em; text-transform: uppercase; color: var(--muted); margin-bottom: 12px; }
+  table.matrix { border-collapse: separate; border-spacing: 10px; width: 100%; table-layout: fixed; }
+  table.matrix .corner { border: 0; background: transparent; width: 8.5ch; }
+  table.matrix thead th { font-weight: 600; font-size: 14px; color: var(--muted); text-align: center; padding-bottom: 2px; }
+  table.matrix tbody th { font-weight: 600; font-size: 14px; color: var(--muted); text-align: right; padding-right: 4px; line-height: 1.2; vertical-align: middle; }
+  table.matrix td.cell { background: var(--card); border: 1px solid var(--line); border-radius: var(--r-sm); padding: 18px 16px; vertical-align: top; }
+  table.matrix td.cell .desc { display: block; font-family: var(--font-disp); font-weight: 600; font-size: 16px; line-height: 1.2; }
+  table.matrix td.cell .hint { display: block; margin-top: 8px; font-family: var(--font-mono); font-size: 11px; color: var(--muted); letter-spacing: .03em; }
+  table.matrix td.aim { background: var(--brand-deep); border-color: var(--brand-deep); color: #fff; box-shadow: 0 18px 34px -20px color-mix(in srgb, var(--brand) 85%, transparent); }
+  table.matrix td.aim .star { margin-bottom: 6px; display: inline-flex; }
+  table.matrix td.aim .desc { color: #fff; }
+  table.matrix td.aim .hint { color: #fff; }
+  .star { display: inline-flex; align-items: center; gap: 6px; font-family: var(--font-mono); font-size: 10.5px; letter-spacing: .14em; text-transform: uppercase; }
+  @media (max-width: 480px) {
+    table.matrix { border-spacing: 6px; }
+    table.matrix .corner { width: 6ch; }
+    table.matrix td.cell { padding: 13px 11px; }
+    table.matrix td.cell .desc { font-size: 14px; }
+    table.matrix thead th, table.matrix tbody th { font-size: 12.5px; }
+  }
+
+  /* ---- how it works ---- */
+  .steps { margin-top: 40px; display: grid; grid-template-columns: repeat(3, 1fr); gap: 26px; }
+  @media (max-width: 860px) { .steps { grid-template-columns: 1fr; gap: 30px; } }
+  .step .num {
+    font-family: var(--font-disp); font-weight: 800; font-size: 15px;
+    width: 34px; height: 34px; border-radius: 50%; display: grid; place-items: center;
+    color: var(--brand-deep); border: 1.5px solid color-mix(in srgb, var(--brand) 45%, var(--line));
+  }
+  .step h3 { margin-top: 16px; font-size: 20px; }
+  .step p { margin-top: 9px; color: var(--muted); font-size: 15.5px; }
+  .step .conn { display: none; }
+
+  /* ---- dark band / gate demo ---- */
+  .dark { background: var(--ink); color: var(--on-dark); }
+  .dark h2 { color: var(--on-dark); }
+  .dark .split { display: grid; grid-template-columns: 1fr 1fr; gap: clamp(30px, 5vw, 64px); align-items: center; }
+  @media (max-width: 880px) { .dark .split { grid-template-columns: 1fr; } }
+  .dark .split .lede { max-width: 40ch; margin-top: 20px; }
+  .dark h2 { font-size: clamp(30px, 4.2vw, 44px); }
+
+  .gatecard {
+    background: var(--ink-2); border: 1px solid var(--on-dark-line); border-radius: var(--r);
+    overflow: hidden; box-shadow: 0 30px 60px -30px rgba(0,0,0,.6);
+  }
+  .gc-head { display: flex; align-items: center; gap: 10px; padding: 14px 20px; border-bottom: 1px solid var(--on-dark-line); font-family: var(--font-mono); font-size: 13px; color: var(--on-dark-muted); }
+  .gc-head .dots { display: flex; gap: 6px; }
+  .gc-head .dots i { width: 10px; height: 10px; border-radius: 50%; background: var(--on-dark-line); display: block; }
+  .gc-body { padding: 22px 20px; }
+  .gc-claim { font-family: var(--font-disp); font-weight: 600; font-size: 19px; color: var(--on-dark); }
+  .gc-rows { margin-top: 20px; display: grid; gap: 10px; }
+  .gc-row { display: flex; align-items: center; gap: 12px; font-size: 14.5px; }
+  .gc-row .lab { color: var(--on-dark-muted); width: 78px; flex: none; font-family: var(--font-mono); font-size: 12px; letter-spacing: .06em; text-transform: uppercase; }
+  .gc-row .val { color: var(--on-dark); font-weight: 500; }
+  .gc-row .rung { margin-left: auto; font-family: var(--font-mono); font-size: 12px; color: var(--on-dark-muted); border: 1px solid var(--on-dark-line); border-radius: var(--r-pill); padding: 2px 10px; }
+  .gc-verdict { margin-top: 22px; padding-top: 18px; border-top: 1px dashed var(--on-dark-line); display: flex; align-items: center; gap: 14px; flex-wrap: wrap; }
+  .verdict-pill { display: inline-flex; align-items: center; gap: 8px; font-family: var(--font-mono); font-weight: 500; font-size: 13px; letter-spacing: .08em; padding: 7px 14px; border-radius: var(--r-pill); }
+  .verdict-pill.block { background: color-mix(in srgb, var(--block) 22%, transparent); color: #ffb3a3; border: 1px solid color-mix(in srgb, var(--block) 55%, transparent); }
+  .verdict-pill .dot { width: 8px; height: 8px; border-radius: 50%; background: var(--block); box-shadow: 0 0 0 3px color-mix(in srgb, var(--block) 25%, transparent); }
+  .gc-why { color: var(--on-dark-muted); font-size: 14px; }
+
+  /* ---- get started ---- */
+  .channels { margin-top: 22px; display: flex; flex-wrap: wrap; align-items: center; gap: 10px 22px; color: var(--muted); font-size: 15px; }
+  .channels a { color: var(--muted); text-decoration: none; border-bottom: 1px solid var(--line); padding-bottom: 1px; transition: color .15s, border-color .15s; }
+  .channels a:hover { color: var(--brand-deep); border-color: var(--brand); }
+  .channels .mono { color: var(--muted); }
+
+  /* ---- faq ---- */
+  .faq { display: grid; gap: 2px; margin-top: 34px; border-top: 1px solid var(--line); }
+  .faq details { border-bottom: 1px solid var(--line); }
+  .faq summary { list-style: none; cursor: pointer; padding: 20px 4px; display: flex; align-items: center; gap: 14px; font-family: var(--font-disp); font-weight: 600; font-size: 18px; }
+  .faq summary::-webkit-details-marker { display: none; }
+  .faq summary .plus { margin-left: auto; color: var(--brand-deep); transition: transform .2s var(--ease); font-family: var(--font-mono); }
+  .faq details[open] summary .plus { transform: rotate(45deg); }
+  .faq .ans { padding: 0 4px 22px; color: var(--muted); max-width: 68ch; }
+
+  /* ---- footer ---- */
+  footer.foot { background: var(--ink); color: var(--on-dark-muted); padding-block: 54px; }
+  footer.foot .wrap { display: flex; flex-wrap: wrap; gap: 24px; align-items: center; }
+  footer.foot .brand { color: var(--on-dark); }
+  footer.foot .links { margin-left: auto; display: flex; gap: 24px; }
+  footer.foot a { color: var(--on-dark-muted); text-decoration: none; font-size: 15px; }
+  footer.foot a:hover { color: var(--on-dark); }
+  footer.foot .fine { flex-basis: 100%; font-size: 13px; color: var(--faint); border-top: 1px solid var(--on-dark-line); padding-top: 22px; }
+
+  .sr-only { position: absolute; width: 1px; height: 1px; padding: 0; margin: -1px; overflow: hidden; clip: rect(0,0,0,0); border: 0; }
+</style>
+</head>
+<body class="no-js">
+<script>document.body.classList.remove('no-js');</script>
+
+<header class="nav">
+  <div class="wrap">
+    <a class="brand" href="#top" aria-label="rung home">
+      <svg class="mark" viewBox="0 0 32 32" aria-hidden="true"><rect width="32" height="32" rx="7" fill="#0b1310"/><g stroke="#21d67f" stroke-width="2.6" stroke-linecap="round"><path d="M11 5v22M21 5v22"/><path d="M11 10h10M11 16h10M11 22h10"/></g></svg>
+      rung
+    </a>
+    <nav>
+      <a href="#problem">Problem</a>
+      <a href="#what">What it does</a>
+      <a href="#how">How it works</a>
+      <a href="https://github.com/rung-dev/rung">Docs</a>
+    </nav>
+    <a class="btn btn-primary cta" href="#install">Get started</a>
+  </div>
+</header>
+
+<main id="top">
+
+  <!-- HERO -->
+  <section class="hero">
+    <div class="wrap grid">
+      <div>
+        <span class="kicker reveal d1">Verification for AI agents</span>
+        <h1 class="reveal d2">At which rung did your agent <span class="accent">verify?</span></h1>
+        <p class="lede reveal d3">Your agent says it verified the change. But "verified" hides the difference: did it run the real thing, or only read the diff? One command grades the evidence, then ships it or blocks it.</p>
+        <div class="hero-install reveal d4" id="install">
+          <code class="cmd">pip install rung-ai</code>
+          <button class="copy" type="button" aria-label="Copy install command" onclick="navigator.clipboard&amp;&amp;navigator.clipboard.writeText('pip install rung-ai').then(()=>{this.textContent='copied';setTimeout(()=>this.textContent='copy',1400);})">copy</button>
+        </div>
+        <div class="channels reveal d4">
+          <span class="mono">also:</span>
+          <a href="https://github.com/rung-dev/rung/pkgs/container/rung">container image</a>
+          <a href="https://github.com/marketplace/actions/rung-gate">GitHub Action</a>
+          <a href="https://github.com/rung-dev/homebrew-tap">Homebrew tap</a>
+          <a href="https://github.com/rung-dev/rung">source &amp; docs</a>
+        </div>
+        <div class="actions reveal d5">
+          <a class="btn btn-ghost" href="#how">See how it works</a>
+        </div>
+      </div>
+
+      <div class="ladder-stage reveal d3" aria-hidden="true">
+        <span class="glow"></span>
+        <svg class="ladder" viewBox="0 0 300 340" fill="none" xmlns="http://www.w3.org/2000/svg">
+          <defs>
+            <linearGradient id="rail" x1="0" y1="0" x2="0" y2="1">
+              <stop offset="0" stop-color="#21d67f"/><stop offset="1" stop-color="#057d47"/>
+            </linearGradient>
+            <filter id="soft" x="-40%" y="-40%" width="180%" height="180%">
+              <feGaussianBlur stdDeviation="3.4"/>
+            </filter>
+          </defs>
+          <!-- gate cap -->
+          <g>
+            <rect x="70" y="16" width="160" height="44" rx="12" fill="#0b1310" stroke="#21d67f" stroke-width="1.6"/>
+            <path d="M104 38l9 9 17-18" stroke="#21d67f" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"/>
+            <text x="140" y="43" font-family="'JetBrains Mono',monospace" font-size="15" fill="#e9f1ea" letter-spacing="1">SHIPS</text>
+          </g>
+          <!-- rails -->
+          <rect x="96" y="70" width="7" height="256" rx="3.5" fill="url(#rail)" opacity=".9"/>
+          <rect x="197" y="70" width="7" height="256" rx="3.5" fill="url(#rail)" opacity=".9"/>
+          <!-- rungs: top lit (ran / rung 1), lower dim (read / rung 0) -->
+          <g stroke-linecap="round">
+            <line x1="99" y1="104" x2="201" y2="104" stroke="#21d67f" stroke-width="8" filter="url(#soft)" opacity=".55"/>
+            <line x1="99" y1="104" x2="201" y2="104" stroke="#21d67f" stroke-width="7"/>
+            <line x1="99" y1="176" x2="201" y2="176" stroke="#3f5a4c" stroke-width="7"/>
+            <line x1="99" y1="248" x2="201" y2="248" stroke="#2c4238" stroke-width="7"/>
+            <line x1="99" y1="316" x2="201" y2="316" stroke="#243a30" stroke-width="7"/>
+          </g>
+          <!-- marker on the lit rung -->
+          <circle cx="150" cy="104" r="13" fill="#0b1310" stroke="#21d67f" stroke-width="2.4"/>
+          <circle cx="150" cy="104" r="4.5" fill="#21d67f"/>
+          <!-- labels -->
+          <text class="lad-lit" x="216" y="108" font-family="'JetBrains Mono',monospace" font-size="12.5">ran it · rung 1</text>
+          <text class="lad-dim" x="216" y="180" font-family="'JetBrains Mono',monospace" font-size="12.5">read it · rung 0</text>
+        </svg>
+      </div>
+    </div>
+  </section>
+
+  <!-- PROBLEM -->
+  <section class="band" id="problem">
+    <div class="wrap">
+      <span class="kicker">The problem</span>
+      <h2 style="font-size:clamp(28px,4vw,42px);margin-top:14px;max-width:20ch;">One word hides how real the check was</h2>
+      <p class="lede measure" style="margin-top:20px;">"The tests pass" and "I ran the real thing and watched it work" reach you as the same word: verified. So does "I checked it" versus "someone independent checked it." When an agent reports done, you cannot tell which one you got.</p>
+
+      <div class="contrast">
+        <div class="cchip low">
+          <span class="tag">reads as: verified</span>
+          <p class="said">"I reviewed the fix."</p>
+          <p>Read the diff. Reasoned about it. Never ran the code. It might be right, but nothing was observed.</p>
+        </div>
+        <div class="cchip high">
+          <span class="tag">reads as: verified</span>
+          <p class="said">"I ran it and watched it pass."</p>
+          <p>Exercised the real surface and captured what happened. A different level of confidence, under the same word.</p>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- WHAT IT DOES -->
+  <section id="what">
+    <div class="wrap">
+      <span class="kicker">What rung does</span>
+      <h2 style="font-size:clamp(28px,4vw,42px);margin-top:14px;max-width:22ch;">It grades the claim, then enforces your bar</h2>
+      <p class="lede measure" style="margin-top:18px;">rung asks two things about every claim your agent makes: how real the check was, and who did it. Those two answers place every claim on this grid.</p>
+
+      <div class="whatgrid">
+        <div>
+          <ul class="axes">
+            <li>
+              <span class="lbl">How real</span>
+              <h3>Ran it, or read it?</h3>
+              <p>Did the agent run the real surface, or only reason about the code? A green test suite alone does not count as running it.</p>
+            </li>
+            <li>
+              <span class="lbl">Who checked</span>
+              <h3>The author, or someone else?</h3>
+              <p>A change checked by whoever wrote it is not the same as one an independent party ran and confirmed.</p>
+            </li>
+          </ul>
+          <p class="aim-note"><b>The aim: ran the real thing, and confirmed by someone independent.</b> rung holds every claim to the bar you set, and never lets one read higher than its evidence.</p>
+        </div>
+
+        <div>
+          <div class="matrix-axis-x">who checked it &rarr;</div>
+          <table class="matrix">
+            <caption class="sr-only">Claims graded by how real the check was and who checked it. The aim is a claim that ran the real thing and was confirmed by someone independent.</caption>
+            <thead>
+              <tr><td class="corner" aria-hidden="true"></td><th scope="col">By the author</th><th scope="col">Independent</th></tr>
+            </thead>
+            <tbody>
+              <tr>
+                <th scope="row">Ran the real thing</th>
+                <td class="cell"><span class="desc">It ran, self-checked</span><span class="hint">rung 1 · author</span></td>
+                <td class="cell aim"><span class="star">&#9733; the aim</span><span class="desc">Ran, independently confirmed</span><span class="hint">rung 1 · independent</span></td>
+              </tr>
+              <tr>
+                <th scope="row">Only read it</th>
+                <td class="cell"><span class="desc">You have its word</span><span class="hint">rung 0 · author</span></td>
+                <td class="cell"><span class="desc">A second read</span><span class="hint">rung 0 · independent</span></td>
+              </tr>
+            </tbody>
+          </table>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- HOW IT WORKS -->
+  <section class="band" id="how">
+    <div class="wrap">
+      <span class="kicker">How it works</span>
+      <h2 style="font-size:clamp(28px,4vw,42px);margin-top:14px;">Three steps, one command</h2>
+
+      <div class="steps">
+        <div class="step">
+          <div class="num">1</div>
+          <h3>Your agent records the run</h3>
+          <p>As it works, the agent captures what it did: what ran, on what surface, and what came out. That becomes the evidence file rung reads.</p>
+        </div>
+        <div class="step">
+          <div class="num">2</div>
+          <h3>You set the bar</h3>
+          <p>Say what each risk level demands. Routine changes can pass on the author's word. Higher stakes require a real run and an independent check.</p>
+        </div>
+        <div class="step">
+          <div class="num">3</div>
+          <h3>rung ships it or blocks it</h3>
+          <p>One command reads the evidence against your bar and returns a verdict. Drop it into CI, or run it on your machine before you merge.</p>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- WHY / DARK BAND -->
+  <section class="dark">
+    <div class="wrap split">
+      <div>
+        <span class="kicker">Why it matters</span>
+        <h2 style="margin-top:14px;">Trust "done" when you can see how it was checked</h2>
+        <p class="lede">rung does not run your tests or replace review. It makes "verified" accountable: every claim carries the evidence that earned it, and nothing ships on its own say-so. The agent keeps moving fast, and you still know what was checked.</p>
+        <div style="margin-top:26px;display:flex;gap:12px;flex-wrap:wrap;">
+          <a class="btn btn-primary" href="#install">Get started</a>
+          <a class="btn btn-on-dark" href="https://github.com/rung-dev/rung">Read the docs</a>
+        </div>
+      </div>
+
+      <div class="gatecard" role="img" aria-label="A gate result: the claim reached rung 0, read the code, but the bar was rung 1, so the verdict is blocked.">
+        <div class="gc-head">
+          <span class="dots"><i></i><i></i><i></i></span>
+          <span>rung gate</span>
+        </div>
+        <div class="gc-body">
+          <p class="gc-claim">"I verified the fix to the auth check."</p>
+          <div class="gc-rows">
+            <div class="gc-row"><span class="lab">Evidence</span><span class="val">Read the code</span><span class="rung">reached rung 0</span></div>
+            <div class="gc-row"><span class="lab">Your bar</span><span class="val">Run the real surface</span><span class="rung">needs rung 1</span></div>
+          </div>
+          <div class="gc-verdict">
+            <span class="verdict-pill block"><span class="dot"></span>BLOCKED · exit 30</span>
+            <span class="gc-why">shipped as verified, but nothing was run</span>
+          </div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- FAQ -->
+  <section class="band" id="faq">
+    <div class="wrap">
+      <span class="kicker">Questions</span>
+      <h2 style="font-size:clamp(26px,3.6vw,38px);margin-top:14px;">Before you install</h2>
+
+      <div class="faq">
+        <details>
+          <summary>Do I need an AI agent to use it? <span class="plus">+</span></summary>
+          <div class="ans">rung is built to ride along with one. Your agent runs the real thing under rung as its verify step, and rung turns what happened into a record. The agent is yours to bring (Claude Code, an SDK loop, an IDE assistant); rung neither ships nor calls it. You can also run rung by hand, with no agent at all.</div>
+        </details>
+        <details>
+          <summary>Does it call a model or send my code anywhere? <span class="plus">+</span></summary>
+          <div class="ans">No. The check is a plain local program: it reads your files, hashes them, and decides. No model, no network, nothing leaves your machine. Any model cost lives with your agent, which is yours.</div>
+        </details>
+        <details>
+          <summary>Isn't this the same as running my tests? <span class="plus">+</span></summary>
+          <div class="ans">No. Tests check behavior; rung checks that a real run happened and is on record. Green tests that never touch the real surface still read as unrun. Keep your tests: rung records whether they observed the thing you are shipping.</div>
+        </details>
+        <details>
+          <summary>What if the agent fakes the record? <span class="plus">+</span></summary>
+          <div class="ans">rung re-derives what it can from the captured output and leaves the rest for a person to re-check. That makes a claim accountable, not unforgeable: you can catch a hollow "verified" where today there is nothing to inspect.</div>
+        </details>
+        <details>
+          <summary>Will it slow my agent down? <span class="plus">+</span></summary>
+          <div class="ans">No. The check is fast, local, and repeatable. The only cost is the run itself, the one you wanted your agent to do anyway.</div>
+        </details>
+      </div>
+    </div>
+  </section>
+
+</main>
+
+<footer class="foot">
+  <div class="wrap">
+    <a class="brand" href="#top" aria-label="rung home">
+      <svg class="mark" viewBox="0 0 32 32" aria-hidden="true"><rect width="32" height="32" rx="7" fill="#0b1310"/><g stroke="#21d67f" stroke-width="2.6" stroke-linecap="round"><path d="M11 5v22M21 5v22"/><path d="M11 10h10M11 16h10M11 22h10"/></g></svg>
+      rung
+    </a>
+    <div class="links">
+      <a href="https://github.com/rung-dev/rung">GitHub</a>
+      <a href="https://pypi.org/project/rung-ai/">PyPI</a>
+      <a href="https://github.com/rung-dev/rung">Docs</a>
+    </div>
+    <div class="fine">At which rung did your agent verify? · Open source · pip install rung-ai</div>
+  </div>
+</footer>
+
+<script>
+  // one page-load reveal
+  requestAnimationFrame(function(){ document.body.classList.add('loaded'); });
+</script>
+</body>
+</html>

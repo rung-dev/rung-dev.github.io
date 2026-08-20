@@ -1,0 +1,66 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="1200" height="630" viewBox="0 0 1200 630">
+  <defs>
+    <style>
+      .head { font-family: "Barlow Condensed"; font-weight: 700; fill: #0b1310; }
+      .body { font-family: "Barlow"; font-weight: 500; fill: #566159; }
+      .lbl  { font-family: "Barlow"; font-weight: 600; }
+      .kick { font-family: "Barlow"; font-weight: 600; fill: #057d47; letter-spacing: 3px; }
+      .mono { font-family: "Barlow"; font-weight: 600; }
+    </style>
+    <linearGradient id="rail" x1="0" y1="0" x2="0" y2="1">
+      <stop offset="0" stop-color="#21d67f"/><stop offset="1" stop-color="#057d47"/>
+    </linearGradient>
+    <radialGradient id="glow" cx="50%" cy="42%" r="55%">
+      <stop offset="0" stop-color="#21d67f" stop-opacity=".26"/><stop offset="100%" stop-color="#21d67f" stop-opacity="0"/>
+    </radialGradient>
+  </defs>
+
+  <!-- canvas -->
+  <rect width="1200" height="630" fill="#f6f8f6"/>
+  <rect x="0" y="622" width="1200" height="8" fill="#06a95f"/>
+
+  <!-- brand -->
+  <g transform="translate(80,66)">
+    <rect width="46" height="46" rx="10" fill="#0b1310"/>
+    <g stroke="#21d67f" stroke-width="3.6" stroke-linecap="round">
+      <path d="M16 8v30M30 8v30"/>
+      <path d="M16 15h14M16 23h14M16 31h14"/>
+    </g>
+    <text class="head" x="60" y="37" font-size="42">rung</text>
+  </g>
+
+  <!-- headline -->
+  <text class="kick" x="80" y="212" font-size="19">VERIFICATION FOR AI AGENTS</text>
+  <text class="head" x="80" y="292" font-size="72">At which rung did</text>
+  <text class="head" x="80" y="366" font-size="72">your agent <tspan fill="#06a95f">verify?</tspan></text>
+  <text class="body" x="80" y="428" font-size="27" style="fill:#3a463e">Did it run the real thing, or just read the code?</text>
+
+  <!-- install pill -->
+  <g transform="translate(80,470)">
+    <rect width="400" height="58" rx="10" fill="#0b1310"/>
+    <text class="mono" x="24" y="38" font-size="25" xml:space="preserve"><tspan fill="#21d67f">$ </tspan><tspan fill="#e9f1ea">pip install </tspan><tspan fill="#21d67f">rung-ai</tspan></text>
+  </g>
+
+  <!-- ladder -->
+  <g transform="translate(770,60)">
+    <ellipse cx="180" cy="270" rx="220" ry="240" fill="url(#glow)"/>
+    <!-- gate cap -->
+    <rect x="96" y="40" width="168" height="52" rx="14" fill="#0b1310"/>
+    <path d="M128 66l11 11 20-22" stroke="#21d67f" stroke-width="4" stroke-linecap="round" stroke-linejoin="round" fill="none"/>
+    <text class="mono" x="170" y="74" font-size="20" fill="#e9f1ea" letter-spacing="1">SHIPS</text>
+    <!-- rails -->
+    <rect x="120" y="104" width="9" height="360" rx="4.5" fill="url(#rail)"/>
+    <rect x="252" y="104" width="9" height="360" rx="4.5" fill="url(#rail)"/>
+    <!-- rungs -->
+    <line x1="124" y1="150" x2="257" y2="150" stroke="#21d67f" stroke-width="10" stroke-linecap="round"/>
+    <line x1="124" y1="252" x2="257" y2="252" stroke="#3f5a4c" stroke-width="9" stroke-linecap="round"/>
+    <line x1="124" y1="354" x2="257" y2="354" stroke="#8ab89f" stroke-width="9" stroke-linecap="round" opacity=".55"/>
+    <line x1="124" y1="446" x2="257" y2="446" stroke="#a9c9b6" stroke-width="9" stroke-linecap="round" opacity=".4"/>
+    <!-- marker -->
+    <circle cx="190" cy="150" r="17" fill="#f6f8f6" stroke="#06a95f" stroke-width="3.4"/>
+    <circle cx="190" cy="150" r="6" fill="#06a95f"/>
+    <!-- labels -->
+    <text class="lbl" x="278" y="156" font-size="20" fill="#0b1310">ran it &#183; rung 1</text>
+    <text class="lbl" x="278" y="258" font-size="20" fill="#7c877f">read it &#183; rung 0</text>
+  </g>
+</svg>
