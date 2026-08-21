@@ -1,0 +1,22 @@
+# rung
+
+> rung is a verification-evidence framework for AI coding agents: it drives the real surface a change touches, captures the exact bytes that surface emitted, records them as a portable JSON evidence bundle, and runs a deterministic offline gate that passes or blocks by policy. It turns "verified" from a self-report into a record you, your CI, or the next reviewer can re-check.
+
+A verification claim collapses three questions into one word; rung pulls them apart. RUNG is how real the check was: 0 (reasoning, or a test in isolation) or 1 (drove the real surface and observed its bytes). METHOD is how the observation was evaluated: `single`, the enforceable `differential` (an S0/S1 pair whose delta matches a declared polarity), or advisory modes that are recorded but never gated. CONTEXT is who checked: `author` (the producer) or `independent` (a reviewer with no producer state), with `cross-model` and `cross-lab` as per-tier independence qualifiers, not higher contexts. The gate is stdlib-only, dependency-free, and a pure function of `(bundle, policy)`: same inputs, same verdict, same output bytes. Three commands: `rung run` witnesses a run and gates it, `rung attest` attaches an independent review, `rung gate` checks a bundle. Exit codes are a contract: `0` pass (the only pass), `30` block, `2` cannot-evaluate; treat both `30` and `2` as no-ship.
+
+Trust boundary, stated honestly: rung makes a "verified" claim accountable and re-checkable, and blocks by default when nothing shows a real run. It holds no keys, signs nothing, calls no model, and sends your code nowhere. It detects post-bundle mutation, not fabrication, and does not prove an independent reviewer was truly independent. It is a framework, not a cryptographic audit tool; signing and identity are left to the ecosystem (DSSE, in-toto, SLSA, Sigstore).
+
+## Overview
+
+- [Website](https://rung-dev.github.io/): landing page and the project pitch.
+- [Repository](https://github.com/rung-dev/rung): source, the gate, worked example cases, and the default policy.
+- [Skill and docs](https://github.com/rung-dev/rung/blob/main/skill/SKILL.md): the three concepts, the subcommands, the policy knobs, and per-surface guidance for reaching rung 1.
+- [Security and trust boundary](https://github.com/rung-dev/rung/blob/main/SECURITY.md): what is in scope, and the by-design limits (accountable, not unforgeable).
+
+## Reference
+
+- [Evidence-bundle schema](https://rung-dev.github.io/schema/evidence-bundle-v2.schema.json): the JSON Schema for an `evidence-bundle/v2` document, served at its own `$id`.
+
+## Install
+
+- [PyPI: rung-ai](https://pypi.org/project/rung-ai/): `pip install rung-ai`. The installed command is `rung`. No account, no API key, no network.
